@@ -1,7 +1,7 @@
-var clients = [];
-clients.push(new Client('alice'));
-clients.push(new Client('bob'));
-clients.push(new Client('carl'));
+var alice = new Client('alice');
+var bob = new Client('bob');
+var carl = new Client('carl');
+var clients = [alice, bob, carl];
 
 // OR
 // var clients = {};
@@ -12,7 +12,7 @@ clients.push(new Client('carl'));
 // var carl = new Client('carl');
 // clients[carl.id] = carl;
 
-var Client = function(id){
+function Client (id){
   this.id = id; // id == public key == address
   this.unusedValidTransactions = {}; // blockchain, contains SHAs
 };
@@ -54,7 +54,7 @@ Client.prototype.broadcastSolution = function(solution){
 Client.prototype.onBroadcastSolution = function(solution, transactions, solverId){
   var thisClient = this;
   if( verify(solution) && validateAll(transactions) ){
-    transactions.push(generateRewardTransaction(solverId, 10); // creates a transaction
+    transactions.push(generateRewardTransaction(solverId, 10)); // creates a transaction
     updateBlockchain(transactions);
   }
 

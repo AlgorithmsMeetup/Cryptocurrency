@@ -1,21 +1,13 @@
-// Wallet
-theBlockchain = []
-alice = new Wallet(theBlockchain, 10)
-bob = new Wallet(theBlockchain, 2)
-carl = new Wallet(theBlockchain)
-
-// Transactions
-alice.give(bob.address, 1) // coin should have id
-
-// Mining (AKA transaction validation)
-
-Wallet = function(theBlockchain, initialBalance){
-  this.balance = initialBalance || 0
-  this.validTransactions = theBlockchain // a copy of the Blockchain
+var wallets = [];
+Wallet = function(genesisBlock){
+  this.balance = 0;
+  this.validTransactions = ['genesisBlock'] // aka blockchain
   this.unvalidatedTransactions = []
-  this.connection = new Socket() // new websocket connection for .on & .broadcast
+  // add self to global wallets for broadcasting purposes
+  wallets.push(this);
+}
 
-  this.connection.on('transaction', function(message){
+Wallet.prototype.receiveTransaction = function(signedTransactionId, sender.publicKey){
     if(verifyTransaction(message.transaction, message.senderPublicKey)){
       unvalidatedTransactions.push(message.transaction)
     }
@@ -25,16 +17,13 @@ Wallet = function(theBlockchain, initialBalance){
     }
   });
 
-  this.connection.on('proofOfWork', function(solution){
-    if(verifyProofOfWork(solution.nonce)){
-      this.validTransactions.push(solution.transactions)
-      // remove unvalidatedTransactions that have now been validated
-    } // else was not a valid solution; disregard.
-  })
-}
+Wallet.prototype.broadcastTransaction = function(transaction, this.publicKey){
+Wallet.prototype.broadcastSolution = function(solution){
 
-Wallet.prototype.give = function(recipientAddress, amount) {
-  nakedtransaction = {sender:this.address, receiver:recipientAddress, amount:amount}
+
+
+Wallet.prototype.give = function(destination, amount) {
+  nakedtransaction = {sender:this.publicKey, receiver:destination, amount:amount}
   signedTransaction = this.sign(nakedtransaction)
   this.connection.broadcast('transaction', {transaction:signedTransaction, senderPublicKey:this.publicKey)
 };
