@@ -3,17 +3,18 @@ var bob = new Client('bob');
 var carl = new Client('carl');
 var clients = [alice, bob, carl];
 
-function Client (id){
+function Client (id){ // DO NOT EDIT
   this.id = id; // id == public key == address
   this.unusedValidTransactions = {}; // blockchain, contains SHAs
   this.unvalidatedTransactions = []; // need to validate these.
 };
+// todo add docstrings
 Client.prototype.give = function(destinationId, amount) {
   var thisClient = this;
-  var transaction = new Transaction(thisClient, 'transfer'+Math.random()); // todo SHA
+  var transaction = new Transaction(thisClient); // todo SHA
   // add all possible input transactions
   arrayify(thisClient.unusedValidTransactions).forEach(function(inputTransaction){
-    transaction.addInput(inputTransaction);
+    transaction.addInput(inputTransaction); // todo what if sender not named in input txn?
   });
   // add destination and amount
   transaction.addOutput(destinationId, amount);
@@ -29,14 +30,6 @@ Client.prototype.give = function(destinationId, amount) {
     }, []);
   }
 };
-Client.prototype.balance = function(){
-  var thisClient = this;
-  var transactions = thisClient.unusedValidTransactions;
-  return Object.keys(transactions).reduce(function(sum, transactionId){
-    var transaction = transactions[transactionId];
-    return sum += transaction.sumToDestination(thisClient.id);
-  }, 0);
-};
 Client.prototype.broadcastTransaction = function(transaction){
   var thisClient = this;
   console.log(thisClient.id,'broadcasts transaction', transaction);
@@ -51,7 +44,7 @@ Client.prototype.onTransactionBroadcast = function(transaction, senderId){
     this.unvalidatedTransactions.push(transaction);
   } else {
     console.log(this.id,'rejects transaction',transaction.id,'from',senderId);
-  }
+  } // onReceivingTransaction
 };
 Client.prototype.mine = function(){
   var thisClient = this;
@@ -90,7 +83,7 @@ Client.prototype.onSolutionBroadcast = function(solution, transactions, solverId
   }
   function updateBlockchain(transactions){
     transactions.forEach(function(transaction){
-      deleteUsedInputTransactions(transaction)
+      deleteUsedInputTransactions(transaction) // todo other dest?
       thisClient.unusedValidTransactions[transaction.id] = transaction;
       // clear txn from unvalidatedTransactions
       var i = thisClient.unvalidatedTransactions.indexOf(transaction);
@@ -103,11 +96,19 @@ Client.prototype.onSolutionBroadcast = function(solution, transactions, solverId
         delete thisClient.unusedValidTransactions[inputTransaction.id];
       });
     }
-  }
+  } // onReceivingSolution
 };
 Client.prototype.validateSolution = function(solution){
   return solution < 0.1;
   // todo
+};
+Client.prototype.balance = function(){
+  var thisClient = this;
+  var transactions = thisClient.unusedValidTransactions;
+  return Object.keys(transactions).reduce(function(sum, transactionId){
+    var transaction = transactions[transactionId];
+    return sum += transaction.sumToDestination(thisClient.id);
+  }, 0);
 };
 // can use a txn if it's never been an input to another transaction in the blockchain
 Client.prototype.verify = function(transaction){
@@ -120,11 +121,11 @@ Client.prototype.generateRewardTransaction = function(solution, id, amount){
   return txn;
 };
 
-function Transaction(sender, sha){
+function Transaction(sender){
   this.sender = sender; // todo or client.id and lookup in clients hash?
-  this.id = sha;
+  this.id = 'transfer'+Math.random();
   this.inputs = [];
-  this.outputs = [];
+  this.outputs = []; // DO NOT EDIT
 }
 Transaction.prototype.addInput = function(inputTransaction){ //should be valid and unused
   this.inputs.push(inputTransaction);
@@ -135,15 +136,11 @@ Transaction.prototype.addOutput = function(publicKey, amount){
   //
 };
 // txn verification helper functions
-Transaction.prototype.sumToDestination = function(clientId){
-  return this.outputs.reduce(function(sum, output){
-    return sum += output.destination === clientId ? output.amount : 0;
+Transaction.prototype.outputsValid = function(){
+  var outputsSum = this.outputs.reduce(function(sum, output){
+    return sum += output.amount;
   }, 0);
-};
-Transaction.prototype.inputsSumToSender = function(publicKey){
-  return this.inputs.reduce(function(sum, inputTransaction){
-    return sum += inputTransaction.sumToDestination(publicKey);
-  }, 0);
+  return this.inputsSumToSender(this.sender.id) - outputsSum >= 0; // difference would be fee to miner
 };
 Transaction.prototype.inputsValid = function(unusedValidTransactions){
   var sender = this.sender;
@@ -156,14 +153,18 @@ Transaction.prototype.inputsValid = function(unusedValidTransactions){
       && inputTransaction.sumToDestination(sender.id) > 0;
   }, true);
 };
-Transaction.prototype.outputsValid = function(){
-  var outputsSum = this.outputs.reduce(function(sum, output){
-    return sum += output.amount;
+Transaction.prototype.inputsSumToSender = function(publicKey){ //todo s/publickey/
+  return this.inputs.reduce(function(sum, inputTransaction){
+    return sum += inputTransaction.sumToDestination(publicKey);
   }, 0);
-  return this.inputsSumToSender(this.sender.id) - outputsSum >= 0; // difference would be fee to miner
+};
+Transaction.prototype.sumToDestination = function(clientId){
+  return this.outputs.reduce(function(sum, output){
+    return sum += output.destination === clientId ? output.amount : 0;
+  }, 0);
 };
 
-var initialTxn = alice.generateRewardTransaction(0, 'alice', 10);
+var initialTxn = alice.generateRewardTransaction(0, 'alice', 10); // how does this really happen?
 alice.unusedValidTransactions[initialTxn.id] = initialTxn;
 bob.unusedValidTransactions[initialTxn.id] = initialTxn;
 carl.unusedValidTransactions[initialTxn.id] = initialTxn;
