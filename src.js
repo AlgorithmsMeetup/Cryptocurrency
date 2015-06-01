@@ -1,16 +1,22 @@
 // make them implement big fns, not helpers.
 // use helper fn
-var alice = new Client('alice');
+var alice = new Client('alice'); // todo remove these
 var bob = new Client('bob');
 var carl = new Client('carl');
 var clients = [alice, bob, carl];
 
-function Client (id){ // DO NOT EDIT
+/*
+ * DO NOT EDIT
+ */
+function Client (id){
   this.id = id; // id == public key == address
-  this.unusedValidTransactions = {}; // blockchain, contains SHAs
+  this.unusedValidTransactions = {}; // blockchain, contains SHAs // todo convert to array?
   this.unvalidatedTransactions = []; // need to validate these.
 };
 // todo add docstrings
+/*
+ * EDIT
+ */
 Client.prototype.give = function(destinationId, amount) {
   var thisClient = this;
   var transaction = new Transaction(thisClient); // todo SHA
@@ -34,6 +40,9 @@ Client.prototype.give = function(destinationId, amount) {
     }, []);
   }
 };
+  /*
+   * EDIT
+   */
   Client.prototype.broadcastTransaction = function(transaction){
     var thisClient = this;
     console.log(thisClient.id,'broadcasts transaction', transaction);
@@ -41,15 +50,21 @@ Client.prototype.give = function(destinationId, amount) {
       client.onReceivingTransaction(transaction, thisClient.id);
     });
   };
+  /*
+   * dependencies: Client.prototype.verify
+   */
   Client.prototype.onReceivingTransaction = function(transaction, senderId){
+      debugger;
     if(this.verify(transaction)){
       console.log(this.id,'accepts transaction',transaction.id,'from',senderId);
-      //todo add to list of transactions being validated
       this.unvalidatedTransactions.push(transaction);
     } else {
       console.log(this.id,'rejects transaction',transaction.id,'from',senderId);
-    } // onReceivingTransaction
+    }
   };
+/*
+ * dependencies: Client.prototype.validateSolution
+ */
 Client.prototype.mine = function(){
   var thisClient = this;
   var solution = 1;
@@ -106,6 +121,9 @@ Client.prototype.onReceivingSolution = function(solution, transactions, solverId
     return solution < 0.2;
     // todo
   };
+/*
+ *
+ */
 Client.prototype.balance = function(){
   var thisClient = this;
   var transactions = thisClient.unusedValidTransactions;
@@ -114,13 +132,18 @@ Client.prototype.balance = function(){
     return sum += transaction.sumToDestination(thisClient.id);
   }, 0);
 };
-  // can use a txn if it's never been an input to another transaction in the blockchain
+  /*
+   *
+   */
   Client.prototype.verify = function(transaction){
     // each input must be valid, unused, and name the sender as a destination
     var inputsValid = transaction.inputsValid(this.unusedValidTransactions)
     var outputsValid = transaction.outputsValid();
     return inputsValid && outputsValid;
-  }
+  };
+/*
+ *
+ */
 Client.prototype.generateRewardTransaction = function(solution, id, amount){
   var txn = new Transaction('coinbase', 'reward'+solution); // same SHA for a given solution
   txn.addOutput(id, amount);
