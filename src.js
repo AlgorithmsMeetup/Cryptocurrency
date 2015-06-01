@@ -1,5 +1,4 @@
-// make them implement big fns, not helpers.
-// use helper fn
+// todo add docstrings
 var alice = new Client('alice'); // todo remove these
 var bob = new Client('bob');
 var carl = new Client('carl');
@@ -13,13 +12,12 @@ function Client (id){
   this.unusedValidTransactions = {}; // blockchain, contains SHAs // todo convert to array?
   this.unvalidatedTransactions = []; // need to validate these.
 };
-// todo add docstrings
 /*
- * EDIT
+ * PLEASE EDIT
  */
 Client.prototype.give = function(destinationId, amount) {
   var thisClient = this;
-  var transaction = new Transaction(thisClient); // todo SHA
+  var transaction = new Transaction(thisClient);
   // add all possible input transactions
   arrayify(thisClient.unusedValidTransactions).forEach(function(inputTransaction){
     if(inputTransaction.sumToDestination(thisClient.id)){
@@ -33,6 +31,7 @@ Client.prototype.give = function(destinationId, amount) {
   thisClient.broadcastTransaction(transaction);
   return transaction;
 
+  // helper (DO NOT EDIT)
   function arrayify(obj){
     return Object.keys(obj).reduce(function(result, key){
       result.push(obj[key]);
@@ -40,29 +39,30 @@ Client.prototype.give = function(destinationId, amount) {
     }, []);
   }
 };
-  /*
-   * EDIT
-   */
-  Client.prototype.broadcastTransaction = function(transaction){
-    var thisClient = this;
-    console.log(thisClient.id,'broadcasts transaction', transaction);
-    clients.forEach(function(client){
-      client.onReceivingTransaction(transaction, thisClient.id);
-    });
-  };
-  /*
-   * dependencies: Client.prototype.verify
-   */
-  Client.prototype.onReceivingTransaction = function(transaction, senderId){
-      debugger;
-    if(this.verify(transaction)){
-      console.log(this.id,'accepts transaction',transaction.id,'from',senderId);
-      this.unvalidatedTransactions.push(transaction);
-    } else {
-      console.log(this.id,'rejects transaction',transaction.id,'from',senderId);
-    }
-  };
 /*
+ * PLEASE EDIT
+ */
+Client.prototype.broadcastTransaction = function(transaction){
+  var thisClient = this;
+  console.log(thisClient.id,'broadcasts transaction', transaction);
+  clients.forEach(function(client){
+    client.onReceivingTransaction(transaction, thisClient.id);
+  });
+};
+/*
+ * PLEASE EDIT
+ * dependencies: Client.prototype.verify
+ */
+Client.prototype.onReceivingTransaction = function(transaction, senderId){
+  if(this.verify(transaction)){
+    console.log(this.id,'accepts transaction',transaction.id,'from',senderId);
+    this.unvalidatedTransactions.push(transaction);
+  } else {
+    console.log(this.id,'rejects transaction',transaction.id,'from',senderId);
+  }
+};
+/*
+ * PLEASE EDIT
  * dependencies: Client.prototype.validateSolution
  */
 Client.prototype.mine = function(){
@@ -71,17 +71,22 @@ Client.prototype.mine = function(){
   while(!thisClient.validateSolution(solution)){
     solution = Math.random();
   }
-  // solution found
   thisClient.broadcastSolution(solution, thisClient.unvalidatedTransactions);
   return solution;
 };
-  Client.prototype.broadcastSolution = function(solution, transactions){
-    var thisClient = this;
-    console.log(thisClient.id,'broadcasts solution',solution,'to validate transactions', transactions);
-    clients.forEach(function(client){
-      client.onReceivingSolution(solution, transactions.slice(), thisClient.id); // slice to copy
-    });
-  };
+/*
+ * PLEASE EDIT
+ */
+Client.prototype.broadcastSolution = function(solution, transactions){
+  var thisClient = this;
+  console.log(thisClient.id,'broadcasts solution',solution,'to validate transactions', transactions);
+  clients.forEach(function(client){
+    client.onReceivingSolution(solution, transactions.slice(), thisClient.id); // slice to copy
+  });
+};
+/*
+ * PLEASE EDIT
+ */
 Client.prototype.onReceivingSolution = function(solution, transactions, solverId){
   var thisClient = this;
   var areAllTransactionsValid = verifyAll(transactions);
@@ -94,7 +99,7 @@ Client.prototype.onReceivingSolution = function(solution, transactions, solverId
     console.log(this.id,'rejects solution',solution,'from',solverId);
   }
 
-  // helpers
+  // helpers (DO NOT EDIT)
   function verifyAll(transactions){
     return transactions.reduce(function(transactionsValid, transaction){
       return transactionsValid && thisClient.verify(transaction);
@@ -115,14 +120,10 @@ Client.prototype.onReceivingSolution = function(solution, transactions, solverId
         delete thisClient.unusedValidTransactions[inputTransaction.id];
       });
     }
-  } // onReceivingSolution
+  }
 };
-  Client.prototype.validateSolution = function(solution){
-    return solution < 0.2;
-    // todo
-  };
 /*
- *
+ * PLEASE EDIT
  */
 Client.prototype.balance = function(){
   var thisClient = this;
@@ -132,17 +133,24 @@ Client.prototype.balance = function(){
     return sum += transaction.sumToDestination(thisClient.id);
   }, 0);
 };
-  /*
-   *
-   */
-  Client.prototype.verify = function(transaction){
-    // each input must be valid, unused, and name the sender as a destination
-    var inputsValid = transaction.inputsValid(this.unusedValidTransactions)
-    var outputsValid = transaction.outputsValid();
-    return inputsValid && outputsValid;
-  };
 /*
- *
+ * PLEASE EDIT
+ */
+Client.prototype.verify = function(transaction){
+  // each input must be valid, unused, and name the sender as a destination
+  var inputsValid = transaction.inputsValid(this.unusedValidTransactions)
+  var outputsValid = transaction.outputsValid();
+  return inputsValid && outputsValid;
+};
+/*
+ * DO NOT EDIT
+ */
+Client.prototype.validateSolution = function(solution){
+  return solution < 0.2;
+  //
+};
+/*
+ * DO NOT EDIT
  */
 Client.prototype.generateRewardTransaction = function(solution, id, amount){
   var txn = new Transaction('coinbase', 'reward'+solution); // same SHA for a given solution
@@ -150,11 +158,14 @@ Client.prototype.generateRewardTransaction = function(solution, id, amount){
   return txn;
 };
 
+/*
+ * DO NOT EDIT any of the Transaction methods.
+ */
 function Transaction(sender){
-  this.sender = sender; // todo or client.id and lookup in clients hash?
+  this.sender = sender;
   this.id = 'transfer'+Math.random();
   this.inputs = [];
-  this.outputs = []; // DO NOT EDIT
+  this.outputs = [];
 }
 Transaction.prototype.addInput = function(inputTransaction){ //should be valid and unused
   this.inputs.push(inputTransaction);
@@ -169,8 +180,8 @@ Transaction.prototype.outputsValid = function(){
   var outputsSum = this.outputs.reduce(function(sum, output){
     return sum += output.amount;
   }, 0);
-  return this.inputsSumToSender(this.sender.id) - outputsSum >= 0; // difference would be fee to miner
-  // todo make === not >=
+  return this.inputsSumToSender(this.sender.id) - outputsSum >= 0;
+  // todo make === not >= ; difference would be fee to miner
 };
 Transaction.prototype.inputsValid = function(unusedValidTransactions){
   var sender = this.sender;
@@ -183,9 +194,9 @@ Transaction.prototype.inputsValid = function(unusedValidTransactions){
       && inputTransaction.sumToDestination(sender.id) > 0;
   }, true);
 };
-Transaction.prototype.inputsSumToSender = function(publicKey){ //todo s/publickey/
+Transaction.prototype.inputsSumToSender = function(clientId){
   return this.inputs.reduce(function(sum, inputTransaction){
-    return sum += inputTransaction.sumToDestination(publicKey);
+    return sum += inputTransaction.sumToDestination(clientId);
   }, 0);
 };
 Transaction.prototype.sumToDestination = function(clientId){
