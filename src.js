@@ -18,21 +18,8 @@ function Client (id){
  * behavior: constructs a Transaction giving the amount to the clientId and the rest of the balance back to thisClient.
  */
 Client.prototype.give = function(clientId, amount) {
-  var thisClient = this;
-  var transaction = new Transaction(thisClient);
-  // add all possible input transactions
-  arrayify(thisClient.unusedValidTransactions).forEach(function(inputTransaction){
-    if(inputTransaction.sumToDestination(thisClient.id)){
-      transaction.addInput(inputTransaction); // todo what if sender not named in input txn?
-    }
-  });
-  // add destination and amount
-  transaction.addOutput(clientId, amount);
-  // send rest of input amount back to thisClient
-  transaction.addOutput(thisClient.id, thisClient.balance() - amount);
-  thisClient.broadcastTransaction(transaction);
-  return transaction;
 
+  return transaction;
   // helper (DO NOT EDIT)
   function arrayify(obj){
     return Object.keys(obj).reduce(function(result, key){
@@ -48,11 +35,7 @@ Client.prototype.give = function(clientId, amount) {
  * behavior: invokes onReceivingTransaction for each client in the global list of clients.
  */
 Client.prototype.broadcastTransaction = function(transaction){
-  var thisClient = this;
-  console.log(thisClient.id,'broadcasts transaction', transaction);
-  clients.forEach(function(client){
-    client.onReceivingTransaction(transaction, thisClient.id);
-  });
+
 };
 /*
  * PLEASE EDIT
@@ -62,12 +45,7 @@ Client.prototype.broadcastTransaction = function(transaction){
  * behavior: if the transaction is valid, adds it to unvalidatedTransactions.
  */
 Client.prototype.onReceivingTransaction = function(transaction, senderId){
-  if(this.verify(transaction)){
-    console.log(this.id,'accepts transaction',transaction.id,'from',senderId);
-    this.unvalidatedTransactions.push(transaction);
-  } else {
-    console.log(this.id,'rejects transaction',transaction.id,'from',senderId);
-  }
+
 };
 /*
  * PLEASE EDIT
@@ -77,12 +55,7 @@ Client.prototype.onReceivingTransaction = function(transaction, senderId){
  * behavior: generates a solution to the proof-of-work problem (for which client.verify returns true) and broadcasts it along with unvalidated transactions to all clients.
  */
 Client.prototype.mine = function(){
-  var thisClient = this;
-  var solution = 1;
-  while(!thisClient.validateSolution(solution)){
-    solution = Math.random();
-  }
-  thisClient.broadcastSolution(solution, thisClient.unvalidatedTransactions);
+
   return solution;
 };
 /*
@@ -92,11 +65,7 @@ Client.prototype.mine = function(){
  * behavior: broadcasts solution, a copy of unvalidatedTransactions, and thisClient's id to all clients.
  */
 Client.prototype.broadcastSolution = function(solution, transactions){
-  var thisClient = this;
-  console.log(thisClient.id,'broadcasts solution',solution,'to validate transactions', transactions);
-  clients.forEach(function(client){
-    client.onReceivingSolution(solution, transactions.slice(), thisClient.id); // slice to copy
-  });
+
 };
 /*
  * PLEASE EDIT
@@ -105,16 +74,6 @@ Client.prototype.broadcastSolution = function(solution, transactions){
  * behavior: if solution and transactions are valid, generates a reward for the solver then invokes updateBlockchain.
  */
 Client.prototype.onReceivingSolution = function(solution, transactions, solverId){
-  var thisClient = this;
-  var areAllTransactionsValid = verifyAll(transactions);
-  if( thisClient.validateSolution(solution) && areAllTransactionsValid ){
-    console.log(this.id,'accepts solution',solution,'from',solverId);
-    var rewardTxn = thisClient.generateRewardTransaction(solution, solverId, 10); // creates a transaction
-    transactions.push(rewardTxn);
-    updateBlockchain(transactions);
-  } else {
-    console.log(this.id,'rejects solution',solution,'from',solverId);
-  }
 
   // helpers (DO NOT EDIT)
   function verifyAll(transactions){
@@ -146,12 +105,7 @@ Client.prototype.onReceivingSolution = function(solution, transactions, solverId
  * behavior: iterates through unusedValidTransactions, summing the amounts transactions sent to thisClient.
  */
 Client.prototype.balance = function(){
-  var thisClient = this;
-  var transactions = thisClient.unusedValidTransactions;
-  return Object.keys(transactions).reduce(function(sum, transactionId){
-    var transaction = transactions[transactionId];
-    return sum += transaction.sumToDestination(thisClient.id);
-  }, 0);
+
 };
 /*
  * PLEASE EDIT
@@ -161,9 +115,8 @@ Client.prototype.balance = function(){
  */
 Client.prototype.verify = function(transaction){
   // each input must be valid, unused, and name the sender as a destination
-  var inputsValid = transaction.inputsValid(this.unusedValidTransactions)
-  var outputsValid = transaction.outputsValid();
-  return inputsValid && outputsValid;
+
+  return isTransactionValid;
 };
 /*
  * DO NOT EDIT
