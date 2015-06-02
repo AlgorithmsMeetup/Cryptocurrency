@@ -1,5 +1,4 @@
-// todo add docstrings
-var alice = new Client('alice'); // todo remove these
+var alice = new Client('alice');
 var bob = new Client('bob');
 var carl = new Client('carl');
 var clients = [alice, bob, carl];
@@ -14,8 +13,11 @@ function Client (id){
 };
 /*
  * PLEASE EDIT
+ * params: clientId, amount
+ * returns: Transaction
+ * behavior: constructs a Transaction giving the amount to the clientId and the rest of the balance back to thisClient.
  */
-Client.prototype.give = function(destinationId, amount) {
+Client.prototype.give = function(clientId, amount) {
   var thisClient = this;
   var transaction = new Transaction(thisClient);
   // add all possible input transactions
@@ -25,8 +27,8 @@ Client.prototype.give = function(destinationId, amount) {
     }
   });
   // add destination and amount
-  transaction.addOutput(destinationId, amount);
-  // send rest of input amount back to self
+  transaction.addOutput(clientId, amount);
+  // send rest of input amount back to thisClient
   transaction.addOutput(thisClient.id, thisClient.balance() - amount);
   thisClient.broadcastTransaction(transaction);
   return transaction;
@@ -41,6 +43,9 @@ Client.prototype.give = function(destinationId, amount) {
 };
 /*
  * PLEASE EDIT
+ * params: Transaction
+ * returns: null
+ * behavior: invokes onReceivingTransaction for each client in the global list of clients.
  */
 Client.prototype.broadcastTransaction = function(transaction){
   var thisClient = this;
@@ -52,6 +57,9 @@ Client.prototype.broadcastTransaction = function(transaction){
 /*
  * PLEASE EDIT
  * dependencies: Client.prototype.verify
+ * params: Transaction, String
+ * returns: null
+ * behavior: if the transaction is valid, adds it to unvalidatedTransactions.
  */
 Client.prototype.onReceivingTransaction = function(transaction, senderId){
   if(this.verify(transaction)){
@@ -64,6 +72,9 @@ Client.prototype.onReceivingTransaction = function(transaction, senderId){
 /*
  * PLEASE EDIT
  * dependencies: Client.prototype.validateSolution
+ * params: null
+ * returns: Number
+ * behavior: generates a solution to the proof-of-work problem (for which client.verify returns true) and broadcasts it along with unvalidated transactions to all clients.
  */
 Client.prototype.mine = function(){
   var thisClient = this;
@@ -76,6 +87,9 @@ Client.prototype.mine = function(){
 };
 /*
  * PLEASE EDIT
+ * params: Number, Transaction
+ * returns: null
+ * behavior: broadcasts solution, a copy of unvalidatedTransactions, and thisClient's id to all clients.
  */
 Client.prototype.broadcastSolution = function(solution, transactions){
   var thisClient = this;
@@ -86,6 +100,9 @@ Client.prototype.broadcastSolution = function(solution, transactions){
 };
 /*
  * PLEASE EDIT
+ * params: Number, Transaction, String
+ * returns: null
+ * behavior: if solution and transactions are valid, generates a reward for the solver then invokes updateBlockchain.
  */
 Client.prototype.onReceivingSolution = function(solution, transactions, solverId){
   var thisClient = this;
@@ -124,6 +141,9 @@ Client.prototype.onReceivingSolution = function(solution, transactions, solverId
 };
 /*
  * PLEASE EDIT
+ * params: null
+ * returns: Number
+ * behavior: iterates through unusedValidTransactions, summing the amounts transactions sent to thisClient.
  */
 Client.prototype.balance = function(){
   var thisClient = this;
@@ -135,6 +155,9 @@ Client.prototype.balance = function(){
 };
 /*
  * PLEASE EDIT
+ * params: Transaction
+ * returns: Boolean
+ * behavior: determines if Transaction's inputs and outputs are valid.
  */
 Client.prototype.verify = function(transaction){
   // each input must be valid, unused, and name the sender as a destination
@@ -172,7 +195,7 @@ Transaction.prototype.addInput = function(inputTransaction){ //should be valid a
   //
 };
 Transaction.prototype.addOutput = function(publicKey, amount){
-  this.outputs.push({amount:amount, destination:publicKey}); // destination can be self
+  this.outputs.push({amount:amount, destination:publicKey}); // destination can be thisClient
   //
 };
 // txn verification helper functions
